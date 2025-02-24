@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"go.temporal.io/sdk/activity"
 )
@@ -52,6 +53,18 @@ func (a *Activities) GenerateInvoice(
 	return &result, nil
 }
 
+// SpendCredits adjust the invoice base on the credits this customer has so credits get spent first.
+func (a *Activities) SpendCredits(
+	ctx context.Context,
+	invoice *GenerateInvoiceResult,
+) (*GenerateInvoiceResult, error) {
+	// Assuming user always has a credit of 1200.
+	creditToSpend := min(invoice.Total, 1200)
+	invoice.Credit = creditToSpend
+	invoice.Total -= creditToSpend
+	return invoice, nil
+}
+
 // calculateCosts calculates the cost and tax for an item.
 func calculateCosts(item Item) (cost int32, tax int32) {
 	// This is just a simulation, so make up a cost
@@ -78,6 +91,8 @@ func (a *Activities) ChargeCustomer(
 
 	result.Success = true
 	result.AuthCode = "1234"
+
+	time.Sleep(10 * time.Second)
 
 	activity.GetLogger(ctx).Info(
 		"Charge",

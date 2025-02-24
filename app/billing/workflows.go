@@ -16,31 +16,36 @@ func Charge(ctx workflow.Context, input *ChargeInput) (*ChargeResult, error) {
 	)
 
 	var invoice GenerateInvoiceResult
-
-	cwf := workflow.ExecuteActivity(ctx,
+	err := workflow.ExecuteActivity(ctx,
 		a.GenerateInvoice,
 		GenerateInvoiceInput{
 			CustomerID: input.CustomerID,
 			Reference:  input.Reference,
 			Items:      input.Items,
 		},
-	)
-	err := cwf.Get(ctx, &invoice)
+	).Get(ctx, &invoice)
 	if err != nil {
 		return nil, err
 	}
 
-	var charge ChargeCustomerResult
+	//err = workflow.ExecuteActivity(ctx,
+	//	a.SpendCredits,
+	//	invoice,
+	//).Get(ctx, &invoice)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	cwf = workflow.ExecuteActivity(ctx,
+	var charge ChargeCustomerResult
+	err = workflow.ExecuteActivity(ctx,
 		a.ChargeCustomer,
 		ChargeCustomerInput{
 			CustomerID: input.CustomerID,
 			Reference:  invoice.InvoiceReference,
 			Charge:     invoice.Total,
 		},
-	)
-	if err := cwf.Get(ctx, &charge); err != nil {
+	).Get(ctx, &charge)
+	if err != nil {
 		logger.Warn("Charge failed", "customer_id", input.CustomerID, "error", err)
 		charge.Success = false
 	}

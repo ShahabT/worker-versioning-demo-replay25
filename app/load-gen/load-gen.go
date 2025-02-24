@@ -58,7 +58,7 @@ func main() {
 			}
 			err = c.SignalWorkflow(
 				context.Background(),
-				getShipmentID(intervalSec*5),
+				getShipmentID(intervalSec*30),
 				"",
 				shipment.ShipmentCarrierUpdateSignalName,
 				&shipment.ShipmentCarrierUpdateSignal{

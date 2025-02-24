@@ -18,11 +18,17 @@ func main() {
 	c := createTemporalClient()
 	defer c.Close()
 
-	billingWorker := worker.New(c, billing.TaskQueue, worker.Options{})
-	billingWorker.RegisterWorkflow(billing.Charge)
+	billingWorker := worker.New(c, billing.TaskQueue, worker.Options{
+		DeploymentOptions: getDeploymentOptions(),
+	})
+	billingWorker.RegisterWorkflowWithOptions(billing.Charge, workflow.RegisterOptions{
+		VersioningBehavior: workflow.VersioningBehaviorPinned,
+	})
 	billingWorker.RegisterActivity(&billing.Activities{})
 
-	shipmentWorker := worker.New(c, shipment.TaskQueue, worker.Options{})
+	shipmentWorker := worker.New(c, shipment.TaskQueue, worker.Options{
+		DeploymentOptions: getDeploymentOptions(),
+	})
 	shipmentWorker.RegisterWorkflow(shipment.Shipment)
 	shipmentWorker.RegisterActivity(&shipment.Activities{})
 

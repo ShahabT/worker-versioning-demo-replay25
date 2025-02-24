@@ -48,6 +48,9 @@ type GenerateInvoiceInput struct {
 	Items      []Item `json:"items"`
 }
 
+type ShippingCost struct {
+}
+
 // GenerateInvoiceResult is the result for the GenerateInvoice activity.
 type GenerateInvoiceResult struct {
 	InvoiceReference string `json:"invoiceReference"`
@@ -55,6 +58,7 @@ type GenerateInvoiceResult struct {
 	Shipping         int32  `json:"shipping"`
 	Tax              int32  `json:"tax"`
 	Total            int32  `json:"total"`
+	Credit           int32  `json:"credit"`
 }
 
 // ChargeCustomerInput is the input for the ChargeCustomer activity.
