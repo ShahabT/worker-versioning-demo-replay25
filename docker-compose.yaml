@@ -1,3 +1,5 @@
 services:
   worker:
     image: orders-worker:${BUILD_ID}
+    environment:
+      - DEPLOYMENT_VERSION=${DEPLOYMENT_VERSION}

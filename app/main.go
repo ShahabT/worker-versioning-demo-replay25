@@ -2,19 +2,29 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/ShahabT/worker-versioning-demo-replay25/billing"
 	"github.com/ShahabT/worker-versioning-demo-replay25/shipment"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
+	"go.temporal.io/sdk/workflow"
 )
 
 func main() {
 	c := createTemporalClient()
 	defer c.Close()
 
-	w := worker.New(c, "orders", worker.Options{})
-	w.RegisterWorkflow(billing.Charge)
+	w := worker.New(c, "orders", worker.Options{
+		DeploymentOptions: worker.DeploymentOptions{
+			UseVersioning:             true,
+			Version:                   os.Getenv("DEPLOYMENT_VERSION"),
+			DefaultVersioningBehavior: workflow.VersioningBehaviorAutoUpgrade,
+		},
+	})
+	w.RegisterWorkflowWithOptions(billing.Charge, workflow.RegisterOptions{
+		VersioningBehavior: workflow.VersioningBehaviorPinned,
+	})
 	w.RegisterWorkflow(shipment.Shipment)
 	w.RegisterActivity(&billing.Activities{})
 	w.RegisterActivity(&shipment.Activities{})
