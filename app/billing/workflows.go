@@ -3,6 +3,7 @@ package billing
 import (
 	"time"
 
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -11,7 +12,10 @@ func Charge(ctx workflow.Context, input *ChargeInput) (*ChargeResult, error) {
 	logger := workflow.GetLogger(ctx)
 	ctx = workflow.WithActivityOptions(ctx,
 		workflow.ActivityOptions{
-			ScheduleToCloseTimeout: 30 * time.Second,
+			ScheduleToCloseTimeout: 30 * time.Minute,
+			RetryPolicy: &temporal.RetryPolicy{
+				MaximumInterval: time.Second,
+			},
 		},
 	)
 
@@ -27,14 +31,6 @@ func Charge(ctx workflow.Context, input *ChargeInput) (*ChargeResult, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//err = workflow.ExecuteActivity(ctx,
-	//	a.SpendCredits,
-	//	invoice,
-	//).Get(ctx, &invoice)
-	//if err != nil {
-	//	return nil, err
-	//}
 
 	var charge ChargeCustomerResult
 	err = workflow.ExecuteActivity(ctx,

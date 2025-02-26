@@ -1,15 +1,10 @@
 package main
 
 import (
-	"context"
 	"log"
-	"os"
 
 	"github.com/ShahabT/worker-versioning-demo-replay25/billing"
 	"github.com/ShahabT/worker-versioning-demo-replay25/shipment"
-	"go.temporal.io/sdk/workflow"
-	"golang.org/x/sync/errgroup"
-
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -18,38 +13,16 @@ func main() {
 	c := createTemporalClient()
 	defer c.Close()
 
-	billingWorker := worker.New(c, billing.TaskQueue, worker.Options{
-		DeploymentOptions: getDeploymentOptions(),
-	})
-	billingWorker.RegisterWorkflowWithOptions(billing.Charge, workflow.RegisterOptions{
-		VersioningBehavior: workflow.VersioningBehaviorPinned,
-	})
-	billingWorker.RegisterActivity(&billing.Activities{})
+	w := worker.New(c, "orders", worker.Options{})
+	w.RegisterWorkflow(billing.Charge)
+	w.RegisterWorkflow(shipment.Shipment)
+	w.RegisterActivity(&billing.Activities{})
+	w.RegisterActivity(&shipment.Activities{})
 
-	shipmentWorker := worker.New(c, shipment.TaskQueue, worker.Options{
-		DeploymentOptions: getDeploymentOptions(),
-	})
-	shipmentWorker.RegisterWorkflow(shipment.Shipment)
-	shipmentWorker.RegisterActivity(&shipment.Activities{})
-
-	g, _ := errgroup.WithContext(context.Background())
-	g.Go(func() error {
-		return billingWorker.Run(worker.InterruptCh())
-	})
-	g.Go(func() error {
-		return shipmentWorker.Run(worker.InterruptCh())
-	})
-	if err := g.Wait(); err != nil {
+	err := w.Run(worker.InterruptCh())
+	if err != nil {
 		log.Fatalln("Error while running workers", err)
 		return
-	}
-}
-
-func getDeploymentOptions() worker.DeploymentOptions {
-	return worker.DeploymentOptions{
-		UseVersioning:             true,
-		Version:                   os.Getenv("DEPLOYMENT_VERSION"),
-		DefaultVersioningBehavior: workflow.VersioningBehaviorAutoUpgrade,
 	}
 }
 

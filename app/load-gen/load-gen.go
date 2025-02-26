@@ -14,8 +14,6 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-const intervalSec = 2
-
 func main() {
 	c, err := client.Dial(
 		client.Options{},
@@ -25,7 +23,7 @@ func main() {
 	}
 	defer c.Close()
 
-	timer := time.Tick(intervalSec * time.Second)
+	timer := time.Tick(500 * time.Millisecond)
 
 	for {
 		select {
@@ -34,13 +32,13 @@ func main() {
 			_, err := c.ExecuteWorkflow(
 				context.Background(),
 				client.StartWorkflowOptions{
-					TaskQueue: billing.TaskQueue,
+					TaskQueue: "orders",
 				},
 				billing.Charge,
 				generateChargeInput(),
 			)
 			if err != nil {
-				panic(err)
+				fmt.Errorf("failed to start a Charge %e\n", err)
 			}
 			fmt.Println("Starting new Shipment workflow")
 			s := generateShipmentInput()
@@ -48,27 +46,13 @@ func main() {
 				context.Background(),
 				client.StartWorkflowOptions{
 					ID:        s.ID,
-					TaskQueue: shipment.TaskQueue,
+					TaskQueue: "orders",
 				},
 				shipment.Shipment,
 				s,
 			)
 			if err != nil {
-				panic(err)
-			}
-			err = c.SignalWorkflow(
-				context.Background(),
-				getShipmentID(intervalSec*30),
-				"",
-				shipment.ShipmentCarrierUpdateSignalName,
-				&shipment.ShipmentCarrierUpdateSignal{
-					Status: shipment.ShipmentStatusDelivered,
-				},
-			)
-			if err == nil {
-				fmt.Println("Shipment delivered")
-			} else {
-				fmt.Println(err)
+				fmt.Errorf("failed to start a Shipment %e\n", err)
 			}
 		}
 	}
@@ -76,7 +60,7 @@ func main() {
 
 func generateShipmentInput() *shipment.ShipmentInput {
 	return &shipment.ShipmentInput{
-		ID: getShipmentID(0),
+		ID: uuid.NewString(),
 		Items: []shipment.Item{
 			{
 				SKU:      strconv.Itoa(2000 + rand.Intn(10)),
@@ -86,11 +70,11 @@ func generateShipmentInput() *shipment.ShipmentInput {
 	}
 }
 
-func getShipmentID(secondsBefore int) string {
-	ts := time.Now().Unix() - int64(secondsBefore)
-	ts -= ts % intervalSec // ts is always a multiplier of intervalSec
-	return fmt.Sprintf("shipment-%d", ts)
-}
+//func getShipmentID(secondsBefore int) string {
+//	ts := time.Now().Unix() - int64(secondsBefore)
+//	ts -= ts % intervalSec // ts is always a multiplier of intervalSec
+//	return fmt.Sprintf("shipment-%d", ts)
+//}
 
 func generateChargeInput() *billing.ChargeInput {
 	return &billing.ChargeInput{

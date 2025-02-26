@@ -9,6 +9,65 @@ import (
 	"go.temporal.io/sdk/activity"
 )
 
+// Item represents an item being ordered.
+type Item struct {
+	SKU      string `json:"sku"`
+	Quantity int32  `json:"quantity"`
+}
+
+// ChargeInput is the input for the Charge workflow.
+type ChargeInput struct {
+	CustomerID     string `json:"customerId"`
+	Reference      string `json:"orderReference"`
+	Items          []Item `json:"items"`
+	IdempotencyKey string `json:"idempotencyKey,omitempty"`
+}
+
+// ChargeResult is the result for the Charge workflow.
+type ChargeResult struct {
+	InvoiceReference string `json:"invoiceReference"`
+	SubTotal         int32  `json:"subTotal"`
+	Shipping         int32  `json:"shipping"`
+	Tax              int32  `json:"tax"`
+	Total            int32  `json:"total"`
+
+	Success  bool   `json:"success"`
+	AuthCode string `json:"authCode"`
+}
+
+// GenerateInvoiceInput is the input for the GenerateInvoice activity.
+type GenerateInvoiceInput struct {
+	CustomerID string `json:"customerId"`
+	Reference  string `json:"orderReference"`
+	Items      []Item `json:"items"`
+}
+
+type ShippingCost struct {
+}
+
+// GenerateInvoiceResult is the result for the GenerateInvoice activity.
+type GenerateInvoiceResult struct {
+	InvoiceReference string `json:"invoiceReference"`
+	SubTotal         int32  `json:"subTotal"`
+	Shipping         int32  `json:"shipping"`
+	Tax              int32  `json:"tax"`
+	Total            int32  `json:"total"`
+	Credit           int32  `json:"credit"`
+}
+
+// ChargeCustomerInput is the input for the ChargeCustomer activity.
+type ChargeCustomerInput struct {
+	CustomerID string `json:"customerId"`
+	Reference  string `json:"reference"`
+	Charge     int32  `json:"charge"`
+}
+
+// ChargeCustomerResult is the result for the GenerateInvoice activity.
+type ChargeCustomerResult struct {
+	Success  bool   `json:"success"`
+	AuthCode string `json:"authCode"`
+}
+
 // Activities implements the billing package's Activities.
 // Any state shared by the worker among the activities is stored here.
 type Activities struct {
@@ -92,7 +151,8 @@ func (a *Activities) ChargeCustomer(
 	result.Success = true
 	result.AuthCode = "1234"
 
-	time.Sleep(10 * time.Second)
+	// Simulate some short delay
+	time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
 
 	activity.GetLogger(ctx).Info(
 		"Charge",

@@ -5,13 +5,12 @@ IFS=$'\n\t'
 # Usage: ./build.sh
 
 # STEP 1: generate a new build ID
-#export BUILD_ID=$(date '+%Y%m%d%H%M%S')$(git rev-parse --short HEAD)
 export BUILD_ID=v$(date '+%M')
-echo "New Build ID: $BUILD_ID"
+echo "Generating new build with ID: $BUILD_ID  ..."
 
 # STEP 2: create Docker image
-IMAGE_TAG=oms-worker:$BUILD_ID
-docker build --tag $IMAGE_TAG ../app
+IMAGE_TAG=orders-worker:$BUILD_ID
+docker build --tag $IMAGE_TAG ../app > /dev/null
 
-echo "Built Image, run the following command to deploy:"
+echo "➡️ Built the Docker Image. Next:"
 echo "./deploy.sh $BUILD_ID"

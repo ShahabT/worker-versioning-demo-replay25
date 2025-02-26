@@ -1,6 +1,7 @@
 package shipment
 
 import (
+	"math/rand"
 	"time"
 
 	"go.temporal.io/sdk/log"
@@ -19,6 +20,9 @@ type ShipmentInput struct {
 	Items []Item
 }
 
+// StatusQuery is the name of the query to use to fetch a Shipment's status.
+const StatusQuery = "status"
+
 // ShipmentCarrierUpdateSignalName is the name for a signal to update a shipment's status from the carrier.
 const ShipmentCarrierUpdateSignalName = "ShipmentCarrierUpdate"
 
@@ -34,6 +38,7 @@ const (
 	ShipmentStatusDispatched = "dispatched"
 	// ShipmentStatusDelivered represents a shipment that has been delivered to the customer
 	ShipmentStatusDelivered = "delivered"
+	ShipmentStatusExpired   = "expired"
 )
 
 // ShipmentCarrierUpdateSignal is used by a carrier to update a shipment's status.
@@ -121,16 +126,23 @@ func (s *shipmentImpl) run(ctx workflow.Context, input *ShipmentInput) (*Shipmen
 }
 
 func (s *shipmentImpl) handleCarrierUpdates(ctx workflow.Context) error {
-	ch := workflow.GetSignalChannel(ctx, ShipmentCarrierUpdateSignalName)
+	timer := workflow.NewTimer(ctx, time.Duration(10+rand.Intn(10))*time.Minute)
+	signalCh := workflow.GetSignalChannel(ctx, ShipmentCarrierUpdateSignalName)
 
-	var signal ShipmentCarrierUpdateSignal
-
-	for s.status != ShipmentStatusDelivered {
+	sel := workflow.NewSelector(ctx)
+	sel.AddReceive(signalCh, func(ch workflow.ReceiveChannel, more bool) {
+		var signal ShipmentCarrierUpdateSignal
 		ch.Receive(ctx, &signal)
-
 		s.logger.Info("Received carrier update", "status", signal.Status)
-
 		s.updateStatus(ctx, signal.Status)
+	})
+	sel.AddFuture(timer, func(_ workflow.Future) {
+		s.updateStatus(ctx, ShipmentStatusExpired)
+		// Shipment expired. Nothing to do, just allow workflow to close.
+	})
+
+	for s.status != ShipmentStatusDelivered && s.status != ShipmentStatusExpired {
+		sel.Select(ctx)
 	}
 
 	return nil
