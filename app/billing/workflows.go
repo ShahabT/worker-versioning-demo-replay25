@@ -32,6 +32,14 @@ func Charge(ctx workflow.Context, input *ChargeInput) (*ChargeResult, error) {
 		return nil, err
 	}
 
+	err = workflow.ExecuteActivity(ctx,
+		a.SpendCredits,
+		invoice,
+	).Get(ctx, &invoice)
+	if err != nil {
+		return nil, err
+	}
+
 	var charge ChargeCustomerResult
 	err = workflow.ExecuteActivity(ctx,
 		a.ChargeCustomer,
