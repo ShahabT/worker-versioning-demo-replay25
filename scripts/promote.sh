@@ -11,8 +11,8 @@ sleep 3 # give enough time for pollers to arrive to the server
 echo "➡️ Setting ramp to 10% for deployment version ${DEPLOYMENT_VERSION}"
 temporal worker deployment set-ramping-version --version "$DEPLOYMENT_VERSION" --percentage 10 -y > /dev/null
 
-echo "⏳  Waiting for 30 seconds before verification..."
-sleep 30
+echo "⏳  Waiting for 60 seconds before verification..."
+sleep 60
 
 # Step 2: Verification
 echo "➡️ Verifying workflows for deployment version ${DEPLOYMENT_VERSION}..."

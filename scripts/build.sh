@@ -15,4 +15,4 @@ docker build --tag $IMAGE_TAG ../app > /dev/null
 DEPLOYMENT_VERSION=orders.${BUILD_ID}
 PREVIOUS_DEPLOYMENT_VERSION=$(temporal worker deployment describe --name orders -o json | jq ".routingConfig.currentVersion" | tr -d '"')
 echo "➡️ Built the Docker Image. Next:"
-echo "./deploy.sh $BUILD_ID; ./promote.sh $DEPLOYMENT_VERSION; ./decommission.sh $PREVIOUS_DEPLOYMENT_VERSION"
+echo "./deploy.sh $BUILD_ID; ./promote.sh $DEPLOYMENT_VERSION"

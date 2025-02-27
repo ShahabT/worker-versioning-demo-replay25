@@ -2,6 +2,7 @@ package billing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"time"
@@ -147,6 +148,9 @@ func (a *Activities) ChargeCustomer(
 	input *ChargeCustomerInput,
 ) (*ChargeCustomerResult, error) {
 	var result ChargeCustomerResult
+
+	// Simulate an application bug
+	return nil, errors.New("Failed to charge. Unexpected upstream error: Bad Request.")
 
 	result.Success = true
 	result.AuthCode = "1234"
