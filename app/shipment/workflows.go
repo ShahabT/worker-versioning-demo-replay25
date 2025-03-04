@@ -126,7 +126,7 @@ func (s *shipmentImpl) run(ctx workflow.Context, input *ShipmentInput) (*Shipmen
 }
 
 func (s *shipmentImpl) handleCarrierUpdates(ctx workflow.Context) error {
-	timer := workflow.NewTimer(ctx, time.Duration(10+rand.Intn(10))*time.Minute)
+	timer := workflow.NewTimer(ctx, time.Duration(5+rand.Intn(10))*time.Minute)
 	signalCh := workflow.GetSignalChannel(ctx, ShipmentCarrierUpdateSignalName)
 
 	sel := workflow.NewSelector(ctx)
