@@ -5,7 +5,12 @@ IFS=$'\n\t'
 # Usage: ./promote.sh <deployment version>
 DEPLOYMENT_VERSION="$1"
 PREVIOUS_DEPLOYMENT_VERSION=$(temporal worker deployment describe --name orders -o json | jq ".routingConfig.currentVersion" | tr -d '"')
-sleep 3 # give enough time for pollers to arrive to the server
+
+# Step 0: Pre-ramp Test
+echo "➡️ Running pre-ramp tests against ${DEPLOYMENT_VERSION}"
+if ! (cd ../app; go run run-acceptance-test/main.go $DEPLOYMENT_VERSION); then
+  exit 1
+fi
 
 # Step 1: Ramp 10%
 echo "➡️ Setting ramp to 10% for deployment version ${DEPLOYMENT_VERSION}"

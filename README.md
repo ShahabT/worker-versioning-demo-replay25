@@ -49,7 +49,7 @@
 ### Incompatible Change to Pinned Workflows
 1. Switch to `spend-credit` branch.
 2. Notice the new activity added in the Charge workflow without Patching.
-3. Run `cicd.sh` to run the full build and deploy process.
+3. Run the full build, deploy, promote, decommission process.
 4. Notice that the promote step now has a ramp step that checks the following at a 10% ramp:
    - At least one wf succeeded in the new build.
    - No errors are logged by the workers.
@@ -58,15 +58,23 @@
 
 ## Sad Path
 
+### Deploy Bad Build
 1. Switch to `bad-build` branch.
 2. Run `cicd.sh` to do the f.
 3. Notice the ramp verification fails for errors. And the ramp is cancelled.
 4. There are some pinned workflows on the new Version.
 5. We don't want to reset them because we don't want them to lose their state.
 6. How can we roll forward?
-7. Switch to `fixed-build` branch.
-8. Build and deploy, but not promote the patched version.
-9. Run `move-pinned.sh` to move the stuck workflows to the fixed Version.
-10. Verify that the stuck workflow is completed now and the bad Version is Drained.
-11. Now that the patch is confirmed on the broken workflows, run `promote.sh` to use it everywhere. 
-12. Run `decommission.sh` to decommission both the bad and old Versions.
+
+### Deploy fixed build and move workflows 
+1. Switch to `fixed-build` branch.
+2. Build and deploy, but not promote the patched version.
+3. Run `move-pinned.sh` to move the stuck workflows to the fixed Version.
+4. Verify that the stuck workflow is completed now and the bad Version is Drained.
+5. Now that the patch is confirmed on the broken workflows, run `promote.sh` to use it everywhere. 
+6. Run `decommission.sh` to decommission both the bad and old Versions.
+
+### Acceptance test
+1. Switch to `acceptance-test` branch.
+2. Note the added "Step 0" in `promote.sh` that runs the `AcceptanceTest` workflow on the new Version before starting to ramp.
+3. Build, deploy and promote and notice that now the acceptance tests are being executed.

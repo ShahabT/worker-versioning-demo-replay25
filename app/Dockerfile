@@ -14,6 +14,7 @@ RUN go mod download
 COPY *.go ./
 COPY billing/* ./billing/
 COPY shipment/* ./shipment/
+COPY acceptance-test/* ./acceptance-test/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -o ./oms-worker

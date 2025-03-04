@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	acceptance_test "github.com/ShahabT/worker-versioning-demo-replay25/acceptance-test"
 	"github.com/ShahabT/worker-versioning-demo-replay25/billing"
 	"github.com/ShahabT/worker-versioning-demo-replay25/shipment"
 	"go.temporal.io/sdk/client"
@@ -22,6 +23,7 @@ func main() {
 			DefaultVersioningBehavior: workflow.VersioningBehaviorAutoUpgrade,
 		},
 	})
+	w.RegisterWorkflow(acceptance_test.AcceptanceTest)
 	w.RegisterWorkflowWithOptions(billing.Charge, workflow.RegisterOptions{
 		VersioningBehavior: workflow.VersioningBehaviorPinned,
 	})
